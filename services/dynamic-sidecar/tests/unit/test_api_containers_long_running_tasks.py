@@ -16,6 +16,7 @@ import pytest
 from aiodocker.containers import DockerContainer
 from aiodocker.volumes import DockerVolume
 from asgi_lifespan import LifespanManager
+from common_library.pydantic_networks_extension import AnyHttpUrlLegacy
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from httpx import AsyncClient
@@ -24,7 +25,7 @@ from models_library.api_schemas_long_running_tasks.base import (
     ProgressPercent,
 )
 from models_library.services_creation import CreateServiceMetricsAdditionalParams
-from pydantic import AnyHttpUrl, parse_obj_as
+from pydantic import AnyHttpUrl, TypeAdapter
 from pytest_mock.plugin import MockerFixture
 from pytest_simcore.helpers.monkeypatch_envs import EnvVarsDict
 from servicelib.fastapi.long_running_tasks.client import (
@@ -157,7 +158,9 @@ def compose_spec(request: pytest.FixtureRequest) -> str:
 
 @pytest.fixture
 def backend_url() -> AnyHttpUrl:
-    return parse_obj_as(AnyHttpUrl, "http://backgroud.testserver.io")
+    return TypeAdapter(AnyHttpUrlLegacy).validate_python(
+        "http://backgroud.testserver.io"
+    )
 
 
 @pytest.fixture
@@ -187,7 +190,7 @@ async def httpx_async_client(
     # crete dir here
     async with AsyncClient(
         app=app,
-        base_url=backend_url,
+        base_url=f"{backend_url}",
         headers={"Content-Type": "application/json"},
     ) as client:
         yield client
@@ -197,7 +200,7 @@ async def httpx_async_client(
 def client(
     app: FastAPI, httpx_async_client: AsyncClient, backend_url: AnyHttpUrl
 ) -> Client:
-    return Client(app=app, async_client=httpx_async_client, base_url=backend_url)
+    return Client(app=app, async_client=httpx_async_client, base_url=f"{backend_url}")
 
 
 @pytest.fixture
@@ -388,9 +391,11 @@ async def test_create_containers_task(
     mock_metrics_params: CreateServiceMetricsAdditionalParams,
     shared_store: SharedStore,
 ) -> None:
-    last_progress_message: tuple[str, float] | None = None
+    last_progress_message: tuple[ProgressMessage, ProgressPercent | None] | None = None
 
-    async def create_progress(message: str, percent: float, _: TaskId) -> None:
+    async def create_progress(
+        message: ProgressMessage, percent: ProgressPercent | None, _: TaskId
+    ) -> None:
         nonlocal last_progress_message
         last_progress_message = (message, percent)
         print(message, percent)
