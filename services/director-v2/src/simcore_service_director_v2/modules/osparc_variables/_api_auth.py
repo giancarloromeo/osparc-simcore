@@ -31,7 +31,7 @@ def create_unique_api_name_for(
 
 
 async def create_user_api_key(
-    app: FastAPI,  # pylint: disable=unused-argument
+    app: FastAPI,  # nosec
     product_name: ProductName,
     user_id: UserID,
     project_id: ProjectID,
