@@ -29,9 +29,9 @@ class EmailAddress(BaseModel):
         """Replace the local part and/or display name of the email address.
 
         Args:
-            new_addr_local: New local part (before @). If None, keeps current.
             new_display_name: Optional custom display name. If None and new_addr_local is provided,
               auto-generates from new_addr_local if original had a display name.
+            new_addr_local: New local part (before @). If None, keeps current.
 
         Returns:
             New EmailAddress instance with updated values
