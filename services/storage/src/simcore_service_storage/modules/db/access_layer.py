@@ -172,7 +172,7 @@ async def _can_delete_all_sub_entries(connection: AsyncConnection, *, file_id: s
         .where(
             file_meta_data.c.file_id.startswith(f"{file_id.rstrip('/')}/", autoescape=True),
             file_meta_data.c.user_id != user_id,
-            ~sa.or_(
+            sa.or_(
                 file_meta_data.c.project_id.is_(None),
                 ~sa.exists(
                     sa.select(sa.literal(1))
